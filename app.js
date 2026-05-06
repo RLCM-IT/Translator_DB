@@ -107,10 +107,9 @@ async function addRow() {
 
     container.querySelectorAll("input").forEach(cb => cb.checked = false)
 
-    await loadData()
-
-    
     addFormDiv.style.display = "none"
+    
+    await loadData()
 }
 
 
