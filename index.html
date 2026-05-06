@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+  <link rel="stylesheet" href="style.css">
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -19,8 +20,19 @@
       <input id="search" placeholder="Search...">
       <button id="addBtn">Add</button>
 
-      <h2>Data</h2>
-      <ul id="dataList"></ul>
+      <div id="addForm">
+        <input id="add-name" placeholder="Name">
+        <input id="add-lastname" placeholder="Lastname">
+        <input id="add-mail" placeholder="Mail">
+
+        <div id="add-languages" class="lang-container"></div>
+
+        <button onclick="addRow()">Add</button>
+      </div>
+      <div id="listContainer">
+        <h2>Data</h2>
+        <ul id="dataList"></ul>
+      </div>
     </div>
     
     

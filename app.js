@@ -1,6 +1,14 @@
 let allData = []
-
+let editingId = []
 let isAdmin = false
+
+const AVAILABLE_LANGUAGES = [
+    "deutsch",
+    "englisch",
+    "spanisch",
+    "französisch",
+    "italienisch"
+]
 
 const supabaseUrl = 'https://bkvvyissajffmhcdduof.supabase.co'
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJrdnZ5aXNzYWpmZm1oY2RkdW9mIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc5ODQ3NTcsImV4cCI6MjA5MzU2MDc1N30.RMNTBpK7npel8Tgr7eHY7zufjn7QDKaQIISyEBCO71c'
@@ -9,6 +17,7 @@ const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
 const loginDiv = document.getElementById('loginDiv')
 const appDiv = document.getElementById('appDiv')
+const addFormDiv = document.getElementById("addForm")
 
 const emailInput = document.getElementById('email')
 const passwordInput = document.getElementById('password')
@@ -64,89 +73,164 @@ logoutBtn.addEventListener('click', async () => {
 
 
 addBtn.addEventListener('click', async () => {
-    const name = prompt("Name?")
-    const lastname = prompt("Lastname?")
-    const mail = prompt("Mail?").toLowerCase()
-    const languageInput = prompt("Languages (comma separated, e.g. deutsch, englisch")
+    addFormDiv.style.display="block"
+})
 
-    if(!name || !lastname || !mail) return
+async function addRow() {
+    const name = document.getElementById("add-name").value
+    const lastname = document.getElementById("add-lastname").value
+    const mail = document.getElementById("add-mail").value
 
-    const languages = languageInput
-        ? languageInput.split(',').map(l =>
-            l.trim().toLowerCase()
-        )
-    :[]
+    const container = document.getElementById("add-languages")
 
+    const languages = Array.from(
+        container.querySelectorAll("input[type='checkbox']:checked")
+    ).map(cb => cb.value.toLowerCase())
+
+    if( !name || !lastname || !mail){
+        alert("Please fill all fields")
+        return
+    }
 
     const { error } = await supabaseClient
-        .from('translatorList')
+        .from("translatorList")
         .insert([{ name, lastname, mail, languages }])
 
     if (error) {
         alert(error.message)
         return
     }
+    
+    document.getElementById("add-name").value = ""
+    document.getElementById("add-lastname").value = ""
+    document.getElementById("add-mail").value = ""
+
+    container.querySelectorAll("input").forEach(cb => cb.checked = false)
 
     await loadData()
-})
-
-
-async function renderList(data) {
-list.innerHTML = ''
-
-data.forEach((item) => {
-    const li = document.createElement('li')
-
-    li.dataset.id = item.id
-
-    li.innerHTML = `
-        <div class="view-mode">
-            <span>  
-                ${item.name} 
-                ${item.lastname} - 
-                ${item.mail} - 
-                ${formatLanguages(item.languages)}
-            </span>
-        </div>
-        <div class="edit-mode" style="display:none;"></div>
-
-        <div class="actions"></div>
-    `
-
-    /*const text = document.createElement('span')
-    text.textContent = `${item.name} 
-                        ${item.lastname} - 
-                        ${item.mail} - 
-                        ${formatLanguages(item.languages)} `
-
-    const editBtn = document.createElement('button')
-    editBtn.textContent = "Edit"
-    editBtn.addEventListener("click", () => {
-        editRow(item.id)
-    })
-
-    const delBtn = document.createElement('button')
-    delBtn.textContent = "Delete"
-    delBtn.addEventListener("click", () => {
-        deleteRow(item.id)
-    })
-
 
     
-    li.appendChild(text)
-    if (isAdmin) {
-        li.appendChild(editBtn)
-        li.appendChild(delBtn)
-    }*/
-
-    list.appendChild(li)
-
-    setupRow(li, item)
-})
+    addFormDiv.style.display = "none"
 }
 
 
-function setupRow(li, item) {
+async function renderList(data) {
+    list.innerHTML = ''
+
+    data.forEach((item) => {
+        const li = document.createElement('li')
+
+        if (editingId === item.id) {
+            renderEditRow(li, item)
+        } else {
+            renderViewRow(li, item)
+        }
+
+        /*li.dataset.id = item.id
+
+        li.innerHTML = `
+            <div class="view-mode">
+                <span>  
+                    ${item.name} 
+                    ${item.lastname} - 
+                    ${item.mail} - 
+                    ${formatLanguages(item.languages)}
+                </span>
+            </div>
+            <div class="edit-mode" style="display:none;"></div>
+
+            <div class="actions"></div>
+        `
+
+        const text = document.createElement('span')
+        text.textContent = `${item.name} 
+                            ${item.lastname} - 
+                            ${item.mail} - 
+                            ${formatLanguages(item.languages)} `
+
+        const editBtn = document.createElement('button')
+        editBtn.textContent = "Edit"
+        editBtn.addEventListener("click", () => {
+            editRow(item.id)
+        })
+
+        const delBtn = document.createElement('button')
+        delBtn.textContent = "Delete"
+        delBtn.addEventListener("click", () => {
+            deleteRow(item.id)
+        })
+
+
+        
+        li.appendChild(text)
+        if (isAdmin) {
+            li.appendChild(editBtn)
+            li.appendChild(delBtn)
+        }*/
+
+        list.appendChild(li)
+
+        //setupRow(li, item)
+    })
+}
+
+
+function renderAddLanguages () {
+    const container = document.getElementById("add-languages")
+
+    if (!container) return
+
+    container.innerHTML = AVAILABLE_LANGUAGES.map(lang => `
+        <label class="lang-item">
+            <input type="checkbox" value="${lang}">
+            ${lang.charAt(0).toUpperCase() + lang.slice(1)}
+        </label>`
+    ).join("")
+}
+
+
+function renderViewRow(li, item) {
+    const info = document.createElement("div")
+
+    const languages = item.languages
+        ? item.languages.map(l =>
+            l.charAt(0).toUpperCase() + l.slice(1)
+        ).join(", "):""
+
+    info.innerHTML = `
+        <b>${item.name} ${item.lastname}</b><br>
+        ${item.mail}<br>
+        <i>${languages}</li>`
+
+    li.appendChild(info)
+
+    if (isAdmin) {
+        const actions = document.createElement("div")
+        
+        const editBtn = document.createElement('button')
+        editBtn.textContent = "Edit"
+        
+        editBtn.addEventListener("click", () => {
+            editingId = item.id
+            renderList(allData)
+            //enterEditMode(li, item)
+        })
+
+        const delBtn = document.createElement('button')
+        delBtn.textContent = "Delete"
+
+        delBtn.addEventListener("click", () => {
+            deleteRow(item.id)
+        })
+    
+        actions.appendChild(editBtn)
+        actions.appendChild(delBtn)
+
+        li.appendChild(actions)
+    }
+}
+
+/*function setupRow(li, item) {
     const view = li.querySelector(".view-mode")
     const edit = li.querySelector(".edit-mode")
     const actions = li.querySelector(".actions")
@@ -170,8 +254,55 @@ function setupRow(li, item) {
         actions.appendChild(delBtn)
     }
 }
+*/
+function renderEditRow(li, item) {
+    const form = document.createElement("div")
 
-function enterEditMode(li, item) {
+    const selectedLangs = Array.isArray(item.languages) ? item.languages : []
+
+    const languageOptions = AVAILABLE_LANGUAGES.map(lang => {
+        const checked = selectedLangs.includes(lang.toLowerCase()) ? "checked" : ""
+        return `<label class="lang-item"><input type="checkbox" value="${lang}" ${checked}>
+            ${lang.charAt(0).toUpperCase() + lang.slice(1)}
+        </option></label>`
+    }).join("")
+
+    form.innerHTML = `
+        <input id="name-${item.id}" value="${item.name}">
+        <input id="lastname-${item.id}" value="${item.lastname}">
+        <input id="mail-${item.id}" value="${item.mail}">
+
+        <div id="language-${item.id}" class="lang-container">${languageOptions}</div>
+    `
+    li.appendChild(form)
+
+    const actions = document.createElement("div")
+
+    const saveBtn = document.createElement("button")
+    saveBtn.textContent = "Save"
+
+    saveBtn.addEventListener("click", () => saveEdit(item.id))
+
+    const cancelBtn = document.createElement("button")
+    cancelBtn.textContent = "Cancel"
+
+    cancelBtn.addEventListener("click", () => {
+        editingId = null
+        renderList(allData)
+    })
+    
+    actions.appendChild(saveBtn)
+    actions.appendChild(cancelBtn)
+
+    li.appendChild(actions)
+
+    setTimeout(() => {
+        document.getElementById(`name-${item.id}`)?.focus()
+    }, 0)
+
+    attachKeyboardHandlers(item)
+}
+/*function enterEditMode(li, item) {
     const view = li.querySelector(".view-mode")
     const edit = li.querySelector(".edit-mode")
     const actions = li.querySelector(".actions")
@@ -202,22 +333,35 @@ function enterEditMode(li, item) {
     
     actions.appendChild(saveBtn)
     actions.appendChild(cancelBtn)
-}
+}*/
 
 
 
 async function saveEdit(id) {
     const name = document.getElementById(`name-${id}`).value
     const lastname = document.getElementById(`lastname-${id}`).value
-    const mail = document.getElementById(`mail-${id}`).value
+    const mail = document.getElementById(`mail-${id}`).value.toLowerCase()
 
-    const languageInput = document.getElementById(`language-${id}`).value
+    const languageInput = document.getElementById(`language-${id}`)
 
-    const languages = languageInput
+    const languages = Array.from(languageInput.querySelectorAll("input[type='checkbox']:checked"))
+        .map(opt => opt.value.toLowerCase())
+
+    /*const languages = languageInput
         ? languageInput.split(',').map(l =>
             l.trim().toLowerCase()
         )
-    :[]
+    :[]*/
+
+    if (!name || !lastname || !mail || !languages) {
+        alert("All fields are required")
+        return 
+    }
+
+    if (!mail.includes("@")) {
+        alert("Invalid email")
+        return
+    }
 
     const { error } = await supabaseClient
         .from("translatorList")
@@ -229,6 +373,7 @@ async function saveEdit(id) {
         return
     }
 
+    editingId = null
     await loadData()
 }
 
@@ -308,15 +453,43 @@ async function updateUI(){
 
         loginDiv.style.display = "none"
         appDiv.style.display = "block"
+        addFormDiv.style.display = "none"
 
         updateAdminUI()
         await loadData()
+        renderAddLanguages()
     } else {
         loginDiv.style.display = "block"
         appDiv.style.display = "none"
+        ddFormDiv.style.display = "none"
         list.innerHTML = ""
         allData = []
-    }
+    }    
+}
+
+
+function attachKeyboardHandlers(item) {
+    const inputs = [
+        `name-${item.id}`,
+        `lastname-${item.id}`,
+        `mail-${item.id}`,
+        `language-${item.id}`
+    ]
+
+    inputs.forEach(id => {
+        const el = document.getElementById(id)
+
+        el?.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+                saveEdit(item.id)
+            }
+
+            if (e.key === "Escape") {
+                editingId = null
+                renderList(allData)
+            }
+        })
+    })
 }
 
 

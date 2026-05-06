@@ -1,5 +1,29 @@
 li {
+  display: grid;
+  grid-template-columns: 2fr 2fr 3fr 3fr auto;
+  gap: 10px;
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+  align-items: center;
+  overflow: hidden;
+}
+
+li input {
+  width: 100%;
+}
+
+li button {
+  padding: 5px 10px;
+}
+
+.lang-container {
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  gap: 5px;
+}
+
+.lang-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
